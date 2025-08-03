@@ -10,8 +10,7 @@
 """
 import random
 # std import
-from time import time, sleep
-from multiprocessing import Process
+from time import sleep
 
 # 3rd import
 import requests
@@ -20,7 +19,6 @@ import requests
 from blockchain.core.transaction import Transaction
 from blockchain.roles.wallet.wallet import Wallet
 from blockchain.roles.mining.pow import ProofOfWorkMining
-from blockchain.roles.node.http_node import NodeHttpSingle
 
 
 """
