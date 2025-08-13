@@ -3,7 +3,7 @@ import sys
 import argparse
 
 # local import
-from blockchain.roles.node.http_node import HttpNode
+from blockchain.roles.node.node import Node
 
 
 # 角色支持的类型定义 Const
@@ -58,12 +58,10 @@ def run_miner(_type):
     print(f"Running miner (type={_type})")
     # TODO: 实现矿工逻辑
 
-def run_node(_type, host, port):
-    if _type == "http":
-        HttpNode(host=host, port=port).run()
-    else:
-        print(f"Node type '{_type}' is not supported.", file=sys.stderr)
-        sys.exit(1)
+def run_node_http(host, port):
+    from blockchain.network.http.http_api import HTTPAPI
+    http_api = HTTPAPI(host, port)
+    Node(api=http_api).start()
 
 def main():
     args = parser.parse_args()
@@ -86,10 +84,17 @@ def main():
     # 根据角色分发
     if args.role == "wallet":
         run_wallet(args.type)
+
     elif args.role == "miner":
         run_miner(args.type)
+
     elif args.role == "node":
-        run_node(args.type, args.host, args.port)
+        if args.type == "http":
+            run_node_http(args.host, args.port)
+        else:
+            print(f"Node type '{args.type}' is not supported.", file=sys.stderr)
+            sys.exit(1)
+
     else:
         print("Invalid role specified.", file=sys.stderr)
         sys.exit(1)

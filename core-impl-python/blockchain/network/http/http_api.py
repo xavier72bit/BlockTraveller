@@ -1,3 +1,10 @@
+# -*- coding: UTF-8 -*-
+# @Project: core-impl-python
+# @File   : http_api.py
+# @Author : Xavier Wu
+# @Date   : 2025/8/13 20:35
+# 运行在HTTP协议下的API, 服务器使用Flask
+
 # std import
 import functools
 
@@ -5,13 +12,12 @@ import functools
 from flask import Flask, request, jsonify
 
 # local import
-from .node import Node
+from ..abstract.api import API
 from ...core.block import Block
 from ...core.transaction import Transaction
 
 
-__all__ = ['HttpNode']
-
+__all__ = ['HTTPAPI']
 
 http = Flask('blockchain-http-node-single')
 
@@ -29,13 +35,18 @@ def http_route(rule, **options):
         return wrapper
     return decorator
 
-# TODO: 解耦Node与API，自由组合
 
-class HttpNode(Node):
+class HTTPAPI(API):
+    @property
+    def protocol(self):
+        return 'http://'
+
     def __init__(self, host, port):
         super().__init__()
         self.host = host
         self.port = port
+
+        self.addr = f'{self.protocol}{self.host}:{self.port}'
 
     def _register_router(self):
         """
@@ -45,10 +56,6 @@ class HttpNode(Node):
             rule, options = flask_router_args
             http.route(rule, **options)(getattr(self, method_name))
 
-    ################################################
-    # Node
-    ################################################
-
     @http_route('/alive', methods=['GET'])
     def _api_alive(self):
         return True
@@ -57,12 +64,8 @@ class HttpNode(Node):
     def _api_join(self):
         pass
 
-    ################################################
-    # BlockChain
-    ################################################
-
     @http_route('/blockchain', methods=['GET'])
-    def _api_download_json(self):
+    def _api_download(self):
         """
         下载json格式的区块链数据
         """
@@ -73,10 +76,6 @@ class HttpNode(Node):
         block_data: dict = request.get_json()
         block = Block.deserialize(block_data)
         return self.blockchain.add_block(block)
-
-    ################################################
-    # Mining
-    ################################################
 
     @http_route('/mining_data/<string:miner_addr>', methods=['GET'])
     def _api_apply_mining_data(self, miner_addr):
@@ -95,10 +94,6 @@ class HttpNode(Node):
     def _api_pow_check(self):
         return self.blockchain.pow_check
 
-    ################################################
-    # user & transaction
-    ################################################
-
     @http_route('/transaction', methods=['POST'])
     def _api_add_transaction(self):
         tx_data: dict = request.get_json()
@@ -110,7 +105,7 @@ class HttpNode(Node):
         return self.blockchain.compute_balance(addr)
 
     @http_route('/prize/<string:addr>')
-    def prize(self, addr):
+    def _api_prize(self, addr):
         """
         空投奖励
         """
