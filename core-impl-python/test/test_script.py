@@ -56,7 +56,7 @@ def ensure_node_alive():
     while True:
         print("尝试连接到node")
         sleep(1)
-        is_alive_req = requests.get('http://127.0.0.1:5000')
+        is_alive_req = requests.get('http://127.0.0.1:5000/alive')
         if is_alive_req.ok:
             if is_alive_req.json():
                 print("node连接成功")
@@ -106,5 +106,5 @@ if __name__ == '__main__':
     else:
         print("未成功挖出区块")
 
-    print(requests.get('http://127.0.0.1:5000').json())
+    print(requests.get('http://127.0.0.1:5000/blockchain').json())
 

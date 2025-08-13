@@ -10,7 +10,7 @@ from ...core.block import Block
 from ...core.transaction import Transaction
 
 
-__all__ = ['NodeHttpSingle']
+__all__ = ['HttpNode']
 
 
 http = Flask('blockchain-http-node-single')
@@ -29,8 +29,14 @@ def http_route(rule, **options):
         return wrapper
     return decorator
 
+# TODO: 解耦Node与API，自由组合
 
-class NodeHttpSingle(Node):
+class HttpNode(Node):
+    def __init__(self, host, port):
+        super().__init__()
+        self.host = host
+        self.port = port
+
     def _register_router(self):
         """
         将当前类的方法，与flask app router绑定
@@ -39,54 +45,77 @@ class NodeHttpSingle(Node):
             rule, options = flask_router_args
             http.route(rule, **options)(getattr(self, method_name))
 
+    ################################################
+    # Node
+    ################################################
+
     @http_route('/alive', methods=['GET'])
-    def alive(self):
+    def _api_alive(self):
         return True
 
-    @http_route('/', methods=['GET'])
-    def download_json(self):
+    @http_route('/join', methods=['POST'])
+    def _api_join(self):
+        pass
+
+    ################################################
+    # BlockChain
+    ################################################
+
+    @http_route('/blockchain', methods=['GET'])
+    def _api_download_json(self):
         """
         下载json格式的区块链数据
         """
         return self.blockchain.to_json()
 
+    @http_route('/block', methods=['POST'])
+    def _api_add_block(self):
+        block_data: dict = request.get_json()
+        block = Block.deserialize(block_data)
+        return self.blockchain.add_block(block)
+
+    ################################################
+    # Mining
+    ################################################
+
     @http_route('/mining_data/<string:miner_addr>', methods=['GET'])
-    def apply_mining_data(self, miner_addr):
+    def _api_apply_mining_data(self, miner_addr):
         """
         下载json格式的交易池数据
         """
         current_txpool = self.txpool.get_mining_data(miner_addr)
         return [t.serialize() for t in current_txpool]
 
-    @http_route('/transaction', methods=['POST'])
-    def add_transaction(self):
-        tx_data: dict = request.get_json()
-        tx = Transaction.deserialize(tx_data)
-        return self.txpool.add_transaction(tx)
-
     @http_route('/last_block', methods=['GET'])
-    def last_block(self):
+    def _api_last_block(self):
         lb = self.blockchain.last_block
         return lb.serialize() if lb else None
 
     @http_route('/pow_check', methods=['GET'])
-    def pow_check(self):
+    def _api_pow_check(self):
         return self.blockchain.pow_check
 
-    @http_route('/block', methods=['POST'])
-    def add_block(self):
-        block_data: dict = request.get_json()
-        block = Block.deserialize(block_data)
-        return self.blockchain.add_block(block)
+    ################################################
+    # user & transaction
+    ################################################
+
+    @http_route('/transaction', methods=['POST'])
+    def _api_add_transaction(self):
+        tx_data: dict = request.get_json()
+        tx = Transaction.deserialize(tx_data)
+        return self.txpool.add_transaction(tx)
 
     @http_route('/balance/<string:addr>')
-    def get_balance(self, addr):
+    def _api_get_balance(self, addr):
         return self.blockchain.compute_balance(addr)
 
     @http_route('/prize/<string:addr>')
     def prize(self, addr):
+        """
+        空投奖励
+        """
         return self.txpool.get_prize(addr, 100)
 
     def run(self):
         self._register_router()
-        http.run(port=5000)
+        http.run(host=self.host, port=self.port)

@@ -3,36 +3,93 @@ import sys
 import argparse
 
 # local import
-from blockchain.roles.node.http_node import NodeHttpSingle
+from blockchain.roles.node.http_node import HttpNode
 
+
+# 角色支持的类型定义 Const
+SUPPORTED_ROLE_TYPES = {
+    "wallet": [],
+    "miner": [],
+    "node": ["http"],
+}
+
+################################################
+# bin args
+################################################
 
 parser = argparse.ArgumentParser(description="Run the blockchain component.")
 parser.add_argument(
     "-r", "--role",
     type=str,
     required=True,
-    choices=["wallet", "miner", "node"],
-    help="Choose a role: wallet / miner / node"
+    choices=SUPPORTED_ROLE_TYPES.keys(),
+    help=f"Choose a role: {', '.join(SUPPORTED_ROLE_TYPES.keys())}"
 )
 
-def run_wallet():
-    pass
+parser.add_argument(
+    "-t", "--type",
+    type=str,
+    help="Specify role type (depends on role)"
+)
 
-def run_miner():
-    pass
+parser.add_argument(
+    "-H", "--host",
+    type=str,
+    default="127.0.0.1",
+    help="Host address (default: 127.0.0.1)"
+)
 
-def run_node():
-    NodeHttpSingle().run()
+parser.add_argument(
+    "-p", "--port",
+    type=int,
+    default=5000,
+    help="Port number (default: 5000)"
+)
+
+################################################
+# main functions
+################################################
+
+def run_wallet(_type):
+    print(f"Running wallet (type={_type})")
+    # TODO: 实现钱包逻辑
+
+def run_miner(_type):
+    print(f"Running miner (type={_type})")
+    # TODO: 实现矿工逻辑
+
+def run_node(_type, host, port):
+    if _type == "http":
+        HttpNode(host=host, port=port).run()
+    else:
+        print(f"Node type '{_type}' is not supported.", file=sys.stderr)
+        sys.exit(1)
 
 def main():
     args = parser.parse_args()
 
+    # 检查类型是否受支持
+    valid_types = SUPPORTED_ROLE_TYPES[args.role]
+    if valid_types:
+        if args.type not in valid_types:
+            print(
+                f"Invalid type '{args.type}' for role '{args.role}'. "
+                f"Supported types: {', '.join(valid_types)}",
+                file=sys.stderr
+            )
+            sys.exit(1)
+    else:
+        if args.type:
+            print(f"Role '{args.role}' does not support type parameter.", file=sys.stderr)
+            sys.exit(1)
+
+    # 根据角色分发
     if args.role == "wallet":
-        run_wallet()
+        run_wallet(args.type)
     elif args.role == "miner":
-        run_miner()
+        run_miner(args.type)
     elif args.role == "node":
-        run_node()
+        run_node(args.type, args.host, args.port)
     else:
         print("Invalid role specified.", file=sys.stderr)
         sys.exit(1)
