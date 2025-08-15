@@ -52,14 +52,11 @@ class TransactionPool:
         清除交易池中已确认的交易
         """
         not_confirmed_txs = [t for t in self.__transactions if not t.is_confirmed]
-        print(not_confirmed_txs)
         del self.__transactions
         self.__transactions = not_confirmed_txs
 
     def get_mining_data(self, miner_addr) -> tuple[Transaction, ...]:
         self.clear()
-
-        print("txpool", self.__transactions)
         if len(self) == 0:
             return tuple()
 

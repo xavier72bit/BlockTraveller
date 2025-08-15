@@ -108,6 +108,20 @@ class HTTPAPI(API):
     def _api_prize(self, addr):
         return self.txpool.get_prize(addr, 100)
 
+    @http_route('/broadcast/tx', methods=['POST'])
+    def _api_get_broadcast_tx(self):
+        tx_data: dict = request.get_json()
+        tx = Transaction.deserialize(tx_data)
+        tx.mark_from_peer()
+        return self.txpool.add_transaction(tx)
+
+    @http_route('/broadcast/block', methods=['POST'])
+    def _api_get_broadcast_block(self):
+        block_data: dict = request.get_json()
+        block = Block.deserialize(block_data)
+        block.mark_from_peer()
+        return self.blockchain.add_block(block)
+
     def run(self):
         self._register_router()
         http.run(host=self.host, port=self.port)

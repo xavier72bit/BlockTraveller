@@ -12,19 +12,14 @@ class Transaction:
     Transaction - 交易信息对象
     """
     __slots__ = [
-        # data fields
         'saddr', 'raddr', 'amount', 'timestamp', 'hash', 'signature',
-        # system fields
-        '_is_confirmed'
+        '_runtime_is_confirmed', '_runtime_is_from_peer'
     ]
-
     frozen_fields = (
-        # data fields
         'saddr', 'raddr', 'amount', 'timestamp', 'hash',
-        # system fields
-        '_is_confirmed'
+        '_runtime_is_confirmed', '_runtime_is_from_peer'
     )
-    core_fields = ('saddr', 'raddr', 'amount', 'timestamp')
+    # 序列化、反序列化时的字段
     serialized_fields = ('saddr', 'raddr', 'amount', 'timestamp', 'hash', 'signature',)
 
     def __init__(self, saddr: str | None, raddr: str, amount: int, timestamp: int):
@@ -42,15 +37,34 @@ class Transaction:
 
     def __init_system_fields(self):
         ## tx pool交互
-        object.__setattr__(self, '_is_confirmed', False)
+        object.__setattr__(self, '_runtime_is_confirmed', False)
+        object.__setattr__(self, '_runtime_is_from_peer', False)
 
     @property
     def is_confirmed(self) -> bool:
-        return self._is_confirmed
+        return self._runtime_is_confirmed
 
     def mark_confirmed(self):
-        # TODO: 检测调用者
-        object.__setattr__(self, '_is_confirmed', True)
+        """
+        将交易标记为已确认
+        """
+        # TODO: 检测调用者, 打log
+        object.__setattr__(self, '_runtime_is_confirmed', True)
+
+    def mark_unconfirmed(self):
+        """
+        将交易标记为未确认
+        """
+        # TODO: 检测调用者, 打log
+        object.__setattr__(self, '_runtime_is_confirmed', False)
+
+    @property
+    def is_from_peer(self):
+        return self._runtime_is_from_peer
+
+    def mark_from_peer(self):
+        # TODO: 检测调用者, 打log
+        object.__setattr__(self, '_runtime_is_from_peer', True)
 
     def __setattr__(self, key, value):
         if key in self.frozen_fields:
@@ -70,11 +84,12 @@ class Transaction:
 
         :return:
         """
-        d = {}
-        for f in self.core_fields:
-            d[f] = getattr(self, f)
-
-        return d
+        return {
+            'saddr': self.saddr,
+            'raddr': self.raddr,
+            'amount': self.amount,
+            'timestamp': self.timestamp
+        }
 
     def compute_hash(self) -> str:
         tx_json = json.dumps(self.tx_core_data(), sort_keys=True).encode()

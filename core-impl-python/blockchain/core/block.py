@@ -10,9 +10,16 @@ class Block:
     """
     区块
     """
-    __slots__ = ['index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash']
-    frozen_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash')
-    core_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash')
+    __slots__ = [
+        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash',
+        '_runtime_is_from_peer'
+    ]
+    frozen_fields = (
+        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash',
+        '_runtime_is_from_peer'
+    )
+    # 序列化、反序列化时的字段
+    serialized_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash')
 
     def __init__(self, index, timestamp, transactions: list[Transaction], nonce, prev_hash):
         ## core data
@@ -24,6 +31,19 @@ class Block:
 
         ## hash
         object.__setattr__(self, 'hash', self.compute_hash())
+
+        self.__init_system_fields()
+
+    def __init_system_fields(self):
+        ## block系统运行时标记
+        object.__setattr__(self, '_runtime_is_from_peer', False)
+        
+    @property
+    def is_from_peer(self):
+        return self._runtime_is_from_peer
+
+    def mark_from_peer(self):
+        object.__setattr__(self, '_runtime_is_from_peer', True)
 
     def __setattr__(self, name, value):
         if name in self.frozen_fields:
@@ -69,8 +89,8 @@ class Block:
 
         b = object.__new__(cls)
 
-        for f in cls.__slots__:
-            if f == 'transactions':
+        for f in cls.serialized_fields:
+            if f == 'transactions':  # 单独单独处理TX的反序列化
                 object.__setattr__(
                     b, f,
                     [Transaction.deserialize(d) for d in data.get(f, [])]
@@ -78,14 +98,21 @@ class Block:
                 continue
             object.__setattr__(b, f, data.get(f, None))
 
+        b.__init_system_fields()
         return b
 
     def serialize(self) -> dict:
         d = {}
-        for f in self.__slots__:
-            if f == 'transactions':
+        for f in self.serialized_fields:
+            if f == 'transactions':  # 单独单独处理TX的序列化
                 d[f] = [t.serialize() for t in getattr(self, f)]
                 continue
             d[f] = getattr(self, f)
 
         return d
+
+    def set_from_peer(self):
+        """
+        将区块标记为从其他node广播得来
+        """
+        object.__setattr__(self, '_runtime_is_from_peer', True)

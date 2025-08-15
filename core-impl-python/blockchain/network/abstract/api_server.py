@@ -38,6 +38,23 @@ class API(ABC):
         """
         请求节点加入网络
         """
+        pass
+
+    @abstractmethod
+    def _api_get_broadcast_tx(self):
+        """
+        从其他节点的广播获取交易信息
+        peer client --> api server
+        """
+        pass
+
+    @abstractmethod
+    def _api_get_broadcast_block(self):
+        """
+        从其他节点的广播获取区块信息
+        peer client --> api server
+        """
+        pass
 
     ################################################
     # BlockChain API
