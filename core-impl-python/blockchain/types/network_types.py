@@ -7,5 +7,5 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing import List
-    from ..network.abstract.api import API
+    from ..network.abstract.api_server import API
+    from ..network.common.peer import NetworkNodePeer

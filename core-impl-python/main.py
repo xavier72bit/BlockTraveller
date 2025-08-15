@@ -59,7 +59,7 @@ def run_miner(_type):
     # TODO: 实现矿工逻辑
 
 def run_node_http(host, port):
-    from blockchain.network.http.http_api import HTTPAPI
+    from blockchain.network.http.http_api_server import HTTPAPI
     http_api = HTTPAPI(host, port)
     Node(api=http_api).start()
 

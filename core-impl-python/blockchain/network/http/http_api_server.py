@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # @Project: core-impl-python
-# @File   : http_api.py
+# @File   : http_api_server.py
 # @Author : Xavier Wu
 # @Date   : 2025/8/13 20:35
 # 运行在HTTP协议下的API, 服务器使用Flask
@@ -12,14 +12,14 @@ import functools
 from flask import Flask, request, jsonify
 
 # local import
-from ..abstract.api import API
+from ..abstract.api_server import API
 from ...core.block import Block
 from ...core.transaction import Transaction
 
 
 __all__ = ['HTTPAPI']
 
-http = Flask('blockchain-http-node-single')
+http = Flask('node-http-api-server')
 
 router_registry = {}
 def http_route(rule, **options):
@@ -106,9 +106,6 @@ class HTTPAPI(API):
 
     @http_route('/prize/<string:addr>')
     def _api_prize(self, addr):
-        """
-        空投奖励
-        """
         return self.txpool.get_prize(addr, 100)
 
     def run(self):
