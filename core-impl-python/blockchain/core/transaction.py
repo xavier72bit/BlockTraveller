@@ -93,8 +93,7 @@ class Transaction:
         }
 
     def compute_hash(self) -> str:
-        tx_json = json.dumps(self.tx_core_data(), sort_keys=True).encode()
-        return hashlib.sha256(tx_json).hexdigest()
+        return compute_hash(self.tx_core_data())
 
     def sign(self, sec_key: str):
         """
@@ -144,7 +143,6 @@ class Transaction:
         computed_hash = t.compute_hash()
         data_hash = data.get('hash', None)
         if computed_hash == data_hash:
-            print('pass')
             object.__setattr__(t, 'hash', computed_hash)
         else:
             raise DeserializeHashValueCheckError(f"TX Data compute hash: {computed_hash}, data hash: {data_hash}")
