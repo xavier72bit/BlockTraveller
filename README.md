@@ -281,8 +281,15 @@ graph TD
 
 # How to join this repository
 
-1. 整体架构
+1. 区块链实现
 
-2. 功能列表
+选择一门你喜欢的语言，进入这个仓库，然后阅读这个目录下的README.md文件。
 
-3. 选择一门你喜欢的语言，进入这个语言的目录（比如python语言的实现，就去python-impl），然后阅读这个目录下的README.md文件。
+| 实现语言 | 实现角色 | 仓库地址 |
+| --- | --- | --- |
+| Python | node,wallet,miner | https://github.com/xavier72bit/BT-full-impl-python |
+
+2. 测试脚本
+
+本仓库的test目录下提供各种规模的测试脚本
+ 

@@ -7,7 +7,3 @@
 
 .idea
 */.idea
-
-# core-impl-python
-core-impl-python/venv
-core-impl-python/**/__pycache__
