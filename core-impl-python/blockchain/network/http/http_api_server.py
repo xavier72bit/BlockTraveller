@@ -62,7 +62,15 @@ class HTTPAPI(API):
 
     @http_route('/join', methods=['POST'])
     def _api_join(self):
-        pass
+        """
+        接收的请求体为:
+        {
+            hash: xxx
+            protocol: xxx
+            addr: xxx
+        }
+        """
+
 
     @http_route('/blockchain', methods=['GET'])
     def _api_download(self):

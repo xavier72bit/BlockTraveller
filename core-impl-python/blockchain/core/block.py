@@ -3,6 +3,7 @@ from __future__ import annotations
 
 # local import
 from .transaction import Transaction
+from ..exceptions import DeserializeHashValueCheckError
 from ..tools.hash_tools import compute_hash
 
 
@@ -96,7 +97,19 @@ class Block:
                     [Transaction.deserialize(d) for d in data.get(f, [])]
                 )
                 continue
+
+            if f == 'hash':  # 跳过hash字段的赋值
+                continue
+
             object.__setattr__(b, f, data.get(f, None))
+
+        # hash一致性检查
+        computed_hash = b.compute_hash()
+        data_hash = data.get('hash', None)
+        if computed_hash == data_hash:
+            object.__setattr__(b, 'hash', computed_hash)
+        else:
+            raise DeserializeHashValueCheckError(f"Block Data compute hash: {computed_hash}, data hash: {data_hash}")
 
         b.__init_system_fields()
         return b

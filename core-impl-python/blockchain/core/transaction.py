@@ -2,6 +2,7 @@
 import json
 import hashlib
 
+from ..exceptions import DeserializeHashValueCheckError
 # local import
 from ..tools.hash_tools import compute_hash
 from ..tools.ecdsa_sign_tools import ECDSATool
@@ -135,7 +136,18 @@ class Transaction:
 
         t = object.__new__(cls)
         for f in cls.serialized_fields:
+            if f == 'hash':  # 跳过hash字段的赋值
+                continue
             object.__setattr__(t, f, data.get(f, None))
+
+        # hash一致性检查
+        computed_hash = t.compute_hash()
+        data_hash = data.get('hash', None)
+        if computed_hash == data_hash:
+            print('pass')
+            object.__setattr__(t, 'hash', computed_hash)
+        else:
+            raise DeserializeHashValueCheckError(f"TX Data compute hash: {computed_hash}, data hash: {data_hash}")
 
         t.__init_system_fields()
         return t

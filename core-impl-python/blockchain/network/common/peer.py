@@ -1,7 +1,7 @@
 # local import
 from blockchain.tools.hash_tools import compute_hash
 from ..exceptions import PeerClientProtocolError
-
+from ...exceptions import DeserializeHashValueCheckError
 
 all_peer_protocol = ('http',)
 
@@ -43,7 +43,17 @@ class NetworkNodePeer:
 
         np = object.__new__(cls)
         for f in cls.__slots__:
+            if f == 'hash':  # 跳过hash字段的赋值
+                continue
             object.__setattr__(np, f, data.get(f, None))
+
+        # hash一致性检查
+        computed_hash = np.compute_hash()
+        data_hash = data.get('hash', None)
+        if computed_hash == data_hash:
+            object.__setattr__(np, 'hash', computed_hash)
+        else:
+            raise DeserializeHashValueCheckError(f"Peer Data compute hash: {computed_hash}, data hash: {data_hash}")
 
         return np
 
