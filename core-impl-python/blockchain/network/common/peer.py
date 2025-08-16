@@ -1,6 +1,6 @@
 # local import
 from blockchain.tools.hash_tools import compute_hash
-from ..exceptions import PeerClientProtocolError
+from ...exceptions import PeerClientProtocolError
 from ...exceptions import DeserializeHashValueCheckError
 
 all_peer_protocol = ('http',)
@@ -79,6 +79,9 @@ class NetworkNodePeerRegistry:
 
     def __getitem__(self, item):
         return self.__peers[item]
+
+    def __iter__(self):
+        return self.__peers.values().__iter__()
 
     def keys(self):
         return self.__peers.keys()

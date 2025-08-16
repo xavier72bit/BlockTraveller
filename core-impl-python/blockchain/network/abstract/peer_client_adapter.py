@@ -33,3 +33,10 @@ class PeerClientAdapter(ABC):
         将区块数据发送给网络节点
         """
         pass
+
+    @abstractmethod
+    def join_network(self, peer: NetworkNodePeer, self_peer_info: NetworkNodePeer):
+        """
+        向指定的网络节点发送加入请求
+        """
+        pass

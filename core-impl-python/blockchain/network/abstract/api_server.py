@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ...types.node_types import Node
+    from ...types.network_types import NetworkNodePeer
 
 # std import
 from abc import abstractmethod, ABC
@@ -16,11 +17,13 @@ class API(ABC):
         self.node = None
         self.blockchain = None
         self.txpool = None
+        self.peer_registry = None
 
     def set_node(self, node: Node):
         self.node = node
         self.blockchain = self.node.blockchain
         self.txpool = self.node.txpool
+        self.peer_registry = self.node.peer_registry
 
     ################################################
     # Node API
@@ -53,6 +56,13 @@ class API(ABC):
         """
         从其他节点的广播获取区块信息
         peer client --> api server
+        """
+        pass
+
+    @abstractmethod
+    def _api_get_broadcast_peer(self):
+        """
+        从其他节点获取广播成员加入信息
         """
         pass
 
@@ -127,6 +137,13 @@ class API(ABC):
     ################################################
     # object function
     ################################################
+
+    @abstractmethod
+    def get_self_peer_info(self) -> NetworkNodePeer:
+        """
+        获取其他node调用自己的peer info
+        """
+        pass
 
     @abstractmethod
     def run(self):

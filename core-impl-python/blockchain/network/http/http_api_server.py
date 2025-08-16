@@ -15,6 +15,7 @@ from flask import Flask, request, jsonify
 from ..abstract.api_server import API
 from ...core.block import Block
 from ...core.transaction import Transaction
+from ...network.common.peer import NetworkNodePeer
 
 
 __all__ = ['HTTPAPI']
@@ -23,10 +24,13 @@ http = Flask('node-http-api-server')
 
 router_registry = {}
 def http_route(rule, **options):
-    """
-    标记Node类的方法，将其与Flask.route绑定，并自动将返回值包装为json字符串
-    """
     def decorator(method):
+        """
+        标记Node类的方法，将其与Flask.route绑定
+        并自动处理将返回值：
+            1. 正常请求: 包装为json字符串
+            2. TODO: 出现异常，返回异常信息
+        """
         router_registry[method.__name__] = (rule, options)
         @functools.wraps(method)
         def wrapper(self, *args, **kwargs):
@@ -69,8 +73,16 @@ class HTTPAPI(API):
             protocol: xxx
             addr: xxx
         }
-        """
 
+        注册调用该接口的节点信息，并返回自己的所有邻居（包括自己）
+        """
+        # 先准备好返回值
+        self_peers = [np.serialize() for np in self.peer_registry.values()]
+
+        peer_info: dict = request.get_json()
+        peer = NetworkNodePeer.deserialize(peer_info)
+        if self.peer_registry.add(peer):
+            return self_peers
 
     @http_route('/blockchain', methods=['GET'])
     def _api_download(self):
@@ -129,6 +141,15 @@ class HTTPAPI(API):
         block = Block.deserialize(block_data)
         block.mark_from_peer()
         return self.blockchain.add_block(block)
+
+    @http_route('/broadcast/peer', methods=['POST'])
+    def _api_get_broadcast_peer(self):
+        peer_info: dict = request.get_json()
+        peer = NetworkNodePeer.deserialize(peer_info)
+        return self.peer_registry.add(peer)
+
+    def get_self_peer_info(self):
+        return NetworkNodePeer(protocol='http', addr=self.addr)
 
     def run(self):
         self._register_router()

@@ -4,7 +4,7 @@ import argparse
 
 # local import
 from blockchain.roles.node.node import Node
-
+from blockchain.network.common.peer import NetworkNodePeer
 
 # 角色支持的类型定义 Const
 SUPPORTED_ROLE_TYPES = {
@@ -46,6 +46,21 @@ parser.add_argument(
     help="Port number (default: 5000)"
 )
 
+parser.add_argument(
+    "--join-peer-protocol",
+    type=str,
+    default=None,
+    choices=SUPPORTED_ROLE_TYPES['node'],
+    help="Protocol used to connect to peer node"
+)
+
+parser.add_argument(
+    "--join-peer-addr",
+    type=str,
+    default=None,
+    help="Address of the peer node to connect to (need to add protocol, e.g. http://127.0.0.1)"
+)
+
 ################################################
 # main functions
 ################################################
@@ -58,10 +73,15 @@ def run_miner(_type):
     print(f"Running miner (type={_type})")
     # TODO: 实现矿工逻辑
 
-def run_node_http(host, port):
+def run_node_http(host, port, join_peer_protocol=None, join_peer_addr=None):
     from blockchain.network.http.http_api_server import HTTPAPI
     http_api = HTTPAPI(host, port)
-    Node(api=http_api).start()
+    node = Node(api=http_api)
+
+    if join_peer_addr and join_peer_protocol:
+        node.set_join_peer(join_peer_protocol, join_peer_addr)
+
+    node.start()
 
 def main():
     args = parser.parse_args()
@@ -90,7 +110,7 @@ def main():
 
     elif args.role == "node":
         if args.type == "http":
-            run_node_http(args.host, args.port)
+            run_node_http(args.host, args.port, args.join_peer_protocol, args.join_peer_addr)
         else:
             print(f"Node type '{args.type}' is not supported.", file=sys.stderr)
             sys.exit(1)
